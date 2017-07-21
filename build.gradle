@@ -6,14 +6,6 @@ repositories {
 
 dependencies {
 
-    testImplementation 'org.spockframework:spock-core:1.0-groovy-2.4'
-}
-
-jar {
-    manifest {
-        attributes(
-                'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': 'fo.rodol.anagrams.Anagrams'
-        )
-    }
+    testCompile 'org.codehaus.groovy:groovy-all'
+    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
 }
