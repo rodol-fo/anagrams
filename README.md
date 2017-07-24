@@ -15,8 +15,14 @@ or in a Windows CMD:
 gradlew.bat clean build
 ```
 
-To run the application:
+To run the Server:
 
 ```bash
-java -jar build/libs/anagrams.jar
+java -cp build/libs/anagrams.jar fo.rodol.anagrams.server.AnagramsServer
+```
+
+To run the Client:
+
+```bash
+java -cp build/libs/anagrams.jar fo.rodol.anagrams.client.AnagramsClient
 ```
