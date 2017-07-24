@@ -3,24 +3,30 @@ package fo.rodol.anagrams.server;
 import fo.rodol.anagrams.dictionary.AnagramsDictionary;
 import fo.rodol.anagrams.dictionary.HashMapAnagramsDictionary;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
-public class AnagramsServer implements Runnable {
+public class AnagramsServer {
 
     public static final int PORT_NUMBER = 4444;
-
-    private ServerSocket serverSocket;
-
+    private final ServerSocket serverSocket;
+    private final BufferedReader in;
+    private final PrintWriter out;
     private AnagramsDictionary anagramsDictionary;
 
-    public AnagramsServer(AnagramsDictionary anagramsDictionary) throws IOException {
+    public AnagramsServer(AnagramsDictionary anagramsDictionary, ServerSocket serverSocket, BufferedReader in, PrintWriter out) {
 
         this.anagramsDictionary = anagramsDictionary;
-        this.serverSocket = new ServerSocket(PORT_NUMBER);
+        this.serverSocket = serverSocket;
+        this.in = in;
+        this.out = out;
     }
 
     public static void main(String[] args) throws IOException {
@@ -28,51 +34,82 @@ public class AnagramsServer implements Runnable {
         HashMapAnagramsDictionary anagramsDictionary = new HashMapAnagramsDictionary();
         anagramsDictionary.init();
 
-        AnagramsServer anagramsServer = new AnagramsServer(anagramsDictionary);
-        anagramsServer.run();
-        System.out.println("AnagramsServer started listening on port " + PORT_NUMBER);
+        try (
+                ServerSocket serverSocket = new ServerSocket(PORT_NUMBER);
+                Socket clientSocket = serverSocket.accept();
+                PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        ) {
 
-        String userInput = readUserInput();
-        outputValidAnagrams(userInput, anagramsDictionary);
-    }
-
-    @Override
-    public void run() {
-
-        try {
-            Socket socker = serverSocket.accept();
-            System.out.println("Connection accepted");
-
-        } catch (IOException e) {
-            e.printStackTrace();
+            AnagramsServer anagramsServer = new AnagramsServer(anagramsDictionary, serverSocket, in, out);
+            anagramsServer.run();
         }
     }
 
-    private static String readUserInput() {
+    public void run() throws IOException {
 
-        System.out.println("> Please enter a word:");
-        Scanner scanner = new Scanner(System.in);
-        return scanner.next();
+        System.out.println("Connection established");
+        String inputLine, outputLine;
+        while ((inputLine = in.readLine()) != null) {
+
+            processClientInput(inputLine);
+        }
     }
 
-    private static void outputValidAnagrams(String word, HashMapAnagramsDictionary anagramsDictionary) {
+    public void processClientInput(String inputLine) {
+
+        String[] split = inputLine.split(":");
+        switch (split[0]) {
+
+            case "P":
+
+                printValidAnagrams(split[1]);
+                break;
+
+            case "A":
+
+                addWord(split[1]);
+                break;
+
+            case "D":
+
+                removeWord(split[1]);
+                break;
+
+        }
+    }
+
+    private void addWord(String word) {
+
+        anagramsDictionary.addWord(word);
+        out.println("word_added");
+    }
+
+    private void removeWord(String word) {
+
+        anagramsDictionary.removeWord(word);
+        out.println("word_removed");
+    }
+
+    private void printValidAnagrams(String word) {
 
         List<String> anagrams = anagramsDictionary.getAnagrams(word);
 
-        if (anagrams == null ) {
+        if (anagrams == null) {
 
-            System.out.println("> Word not found");
+            out.println("word_not_found");
 
         } else if (anagrams.size() == 1) {
 
-            System.out.println("> No anagrams have been found for the word: " + word);
+            out.println("no_anagrams_found");
 
         } else {
 
-            System.out.println("> These anagrams have been found for the word: " + word);
-            anagrams.stream()
+            String anagramsResponse = anagrams.stream()
                     .filter(s -> !word.equals(s))
-                    .forEach(System.out::println);
+                    .collect(Collectors.joining(","));
+
+            out.println("anagrams:" + anagramsResponse);
         }
     }
 }

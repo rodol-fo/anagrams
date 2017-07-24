@@ -7,4 +7,8 @@ public interface AnagramsDictionary {
     List<String> getAnagrams(String word);
 
     void init();
+
+    void addWord(String word);
+
+    boolean removeWord(String word);
 }

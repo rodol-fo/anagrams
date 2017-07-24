@@ -11,11 +11,6 @@ public class HashMapAnagramsDictionary implements AnagramsDictionary {
 
     private Map<String, List<String>> instance;
 
-    public HashMapAnagramsDictionary() {
-
-        init();
-    }
-
     /**
      * Traverses the file line by line.
      * For each line, puts an entry in a Map, with the key as the word sorted alphabetically
@@ -41,18 +36,44 @@ public class HashMapAnagramsDictionary implements AnagramsDictionary {
 
         while (scanner.hasNext()) {
 
-            String line = scanner.next();
-            String key = sortString(line);
+            String word = scanner.next();
+            addWord(word);
+        }
+    }
 
-            if (instance.containsKey(key)) {
-                instance.get(key).add(line);
+    @Override
+    public void addWord(String word) {
 
-            } else {
-                List<String> words = new ArrayList<>();
-                words.add(line);
-                instance.put(key, words);
+        String key = sortString(word);
+
+        if (instance.containsKey(key)) {
+
+            if (!instance.get(key).contains(word)) {
+                instance.get(key).add(word);
+            }
+
+        } else {
+            List<String> words = new ArrayList<>();
+            words.add(word);
+            instance.put(key, words);
+        }
+    }
+
+    @Override
+    public boolean removeWord(String word) {
+
+        String key = sortString(word);
+        boolean removed = false;
+
+        if (instance.containsKey(key)) {
+            removed = instance.get(key).remove(word);
+
+            if (removed && instance.get(key).isEmpty()) {
+
+                instance.remove(key);
             }
         }
+        return removed;
     }
 
     /**
